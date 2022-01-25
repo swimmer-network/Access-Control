@@ -7,6 +7,11 @@ import "./AccessControlStorage.sol";
 
 contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStorage{
     function initialize(address[] memory admins) external initializer() {
+        CREATE_CONTRACT_ROLE = keccak256("CREATE_CONTRACT");
+        VALIDATOR_ROLE = keccak256("VALIDATOR");
+        SETBLACKLIST_ROLE = keccak256("ADD_REMOVE_FROM_TO_LIST");
+        firstBanningTime = 1 hours;
+        secondBanningTime = 7955107200; // 2222/Feb/02 00:00:00
         for(uint i = 0; i < admins.length; i++){
             _grantRole(CREATE_CONTRACT_ROLE, admins[i]);
             _grantRole(VALIDATOR_ROLE, admins[i]);

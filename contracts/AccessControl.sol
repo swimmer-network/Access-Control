@@ -1,19 +1,12 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-
-contract SwimmerNetworkAC is AccessControl{
-    bytes32 public constant CREATE_CONTRACT_ROLE = keccak256("CREATE_CONTRACT");
-    bytes32 public constant VALIDATOR_ROLE = keccak256("VALIDATOR");
-    bytes32 public constant SETBLACKLIST_ROLE = keccak256("ADD_REMOVE_FROM_TO_LIST");
-
-    mapping (address => uint256) public blockedTime;
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "./AccessControlStorage.sol";
 
 
-    uint256 public firstBanningTime = 1 hours;
-    uint256 public secondBanningTime = 7955107200; // 2222/Feb/02 00:00:00
-
-    constructor(address[] memory admins) public {
+contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStorage{
+    function initialize(address[] memory admins) external initializer() {
         for(uint i = 0; i < admins.length; i++){
             _grantRole(CREATE_CONTRACT_ROLE, admins[i]);
             _grantRole(VALIDATOR_ROLE, admins[i]);

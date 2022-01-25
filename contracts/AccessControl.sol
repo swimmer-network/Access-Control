@@ -21,6 +21,7 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
     }
 
     function setBlacklist(address add) external onlyRole(SETBLACKLIST_ROLE){
+        require(blockedTime[add] != secondBanningTime, "Permanently BAN");
         if(blockedTime[add] == 0){
             blockedTime[add] = block.timestamp + firstBanningTime;
         }

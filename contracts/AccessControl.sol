@@ -34,13 +34,6 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
     }
 
     function isBlacklist(address add) external view returns(bool){
-        return blockedTime[add] < block.timestamp;
-        if(blockedTime[add] == 0) {
-            return false;
-        }
-        if(blockedTime[add] == secondBanningTime){
-            return true;
-        }
         if(blockedTime[add] > block.timestamp){
             return true;
         }

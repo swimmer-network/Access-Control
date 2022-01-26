@@ -7,7 +7,12 @@ contract SwimmerNetworkACStorage {
 
     mapping (address => uint256) public blockedTime;
 
-
     uint256 public firstBanningTime;
     uint256 public secondBanningTime;
+
+    struct ContractInfo{
+        address owner;
+        bool feeCover;
+    }
+    mapping (address => ContractInfo) feeCoverInfo;
 }

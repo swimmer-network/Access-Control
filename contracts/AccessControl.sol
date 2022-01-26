@@ -37,4 +37,22 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
     function isBlacklist(address add) external view returns(bool){
         return blockedTime[add] > block.timestamp;
     }
+
+    function setFeeCover(address _contract, bool onoff) external onlyRole(CREATE_CONTRACT_ROLE){
+        ContractInfo storage info = feeCoverInfo[_contract];
+        if(info.owner == address(0x0)){
+            info.owner = _msgSender();
+        }
+        else{
+            require(info.owner == _msgSender(), "Invalid caller");
+        }
+        info.feeCover = onoff;
+    }
+
+    function changeContractOwner(address _contract, address newOwner) external onlyRole(CREATE_CONTRACT_ROLE){
+        require(newOwner != address(0x0), "Invalid address");
+        ContractInfo storage info = feeCoverInfo[_contract];
+        require(info.owner == _msgSender(), "Invalid caller");
+        info.owner = newOwner;
+    }
 }

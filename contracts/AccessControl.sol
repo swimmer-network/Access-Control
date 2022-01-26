@@ -44,7 +44,7 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
             info.owner = _msgSender();
         }
         else{
-            require(info.owner == _msgSender(), "Invalid caller");
+            require(info.owner == _msgSender(), "Invalid owner");
         }
         info.feeCover = onoff;
     }

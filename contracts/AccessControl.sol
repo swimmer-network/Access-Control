@@ -7,9 +7,6 @@ import "./AccessControlStorage.sol";
 
 contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStorage{
     function initialize(address[] memory admins) external initializer() {
-        CREATE_CONTRACT_ROLE = keccak256("CREATE_CONTRACT");
-        VALIDATOR_ROLE = keccak256("VALIDATOR");
-        SETBLACKLIST_ROLE = keccak256("ADD_REMOVE_FROM_TO_LIST");
         firstBanningTime = 1 hours;
         secondBanningTime = 7955107200; // 2222/Feb/02 00:00:00
         for(uint i = 0; i < admins.length; i++){
@@ -29,7 +26,6 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
             blockedTime[add] = secondBanningTime;
         }
     }
-
     function removeBlacklist(address add) external onlyRole(SETBLACKLIST_ROLE){
             blockedTime[add] = 0;
     }
@@ -54,5 +50,35 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
         ContractInfo storage info = feeCoverInfo[_contract];
         require(info.owner == _msgSender(), "Invalid caller");
         info.owner = newOwner;
+    }
+
+    function addValidators(address[] memory validators) external onlyRole(DEFAULT_ADMIN_ROLE){
+        require(validators.length > 0, "validators are empty");
+        for(uint i = 0; i < validators.length; i++){
+            validatorsSet.push(validators[i]);
+            _grantRole(VALIDATOR_ROLE, validators[i]);
+        }
+        numberOfValidators += validators.length;
+    }
+
+    function removeValidators(uint[] memory indexes) external onlyRole(DEFAULT_ADMIN_ROLE){
+        require(indexes.length > 0, "validators are empty");
+        for(uint i = 0; i < indexes.length; i++){
+            delete validatorsSet[indexes[i]];
+            _revokeRole(VALIDATOR_ROLE, validatorsSet[indexes[i]]);
+        }
+        numberOfValidators -= indexes.length;
+    }
+    
+    function getValidatorsSet() external view returns(address[] memory){
+        return validatorsSet;
+    }
+
+    function getNumberOfValidators() external view returns(uint){
+        return numberOfValidators;
+    }
+
+    function isValidator(address add) external view returns(bool){
+        return hasRole(VALIDATOR_ROLE, add);
     }
 }

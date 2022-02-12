@@ -1,22 +1,19 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IAccessControl.sol";
+import "./RewardPoolStorage.sol";
 
-contract RewardPool {
-    address public rewardToken;
-    address public accessControlAddress;
-    // uint256 public numberOfActiveValidators;
-    // address[] public validatorsSet;
-    mapping(address => uint256) private balanceOfWork;
-    uint256 public lastClaimedTime;
-    uint256 public claimedPeriod;
+
+contract RewardPool is Ownable, RewardPoolStorage{
     constructor(address _rewardToken, address _accessControl) {
         rewardToken = _rewardToken;
         accessControlAddress = _accessControl;
     }
 
     function claimReward() external{
+        require(lastClaimedTime + claimedPeriod < block.timestamp, "RewardPool: not allow to claim");
         uint currentRewardBalance = IERC20(rewardToken).balanceOf(address(this));
         uint numberOfActiveValidator = IAccessControl(accessControlAddress).getNumberOfValidators();
         address[] memory validatorsSet = IAccessControl(accessControlAddress).getValidatorsSet();
@@ -29,6 +26,11 @@ contract RewardPool {
                 IERC20(rewardToken).transfer(validatorsSet[i], rewardPerWORK);
             }
         }
+        lastClaimedTime = block.timestamp;
+    }
+
+    function changeClaimPeriod(uint newPeriod) external onlyOwner(){
+        claimedPeriod = newPeriod;
     }
 
     function balanceOf(address validator) external view returns(uint256){

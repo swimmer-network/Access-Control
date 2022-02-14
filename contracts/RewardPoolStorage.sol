@@ -7,4 +7,5 @@ contract RewardPoolStorage {
     uint256 public burnRate;
     uint256 public lastClaimedTime;
     uint256 public claimedPeriod;
+    uint256 public constant rateDecimals = 10**4;
 }

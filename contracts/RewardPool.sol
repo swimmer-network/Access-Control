@@ -8,9 +8,10 @@ import "./RewardPoolStorage.sol";
 
 
 contract RewardPool is Ownable, Initializable, RewardPoolStorage{
-    function initialize(address _rewardToken, address _accessControl) external initializer(){
+    function initialize(address _rewardToken, address _accessControl, uint _burnRate) external initializer() onlyOwner(){
         rewardToken = _rewardToken;
         accessControlAddress = _accessControl;
+        burnRate = _burnRate;
     }
 
     function claimReward() external{
@@ -18,7 +19,7 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
         uint currentRewardBalance = IERC20(rewardToken).balanceOf(address(this));
         uint numberOfActiveValidator = IAccessControl(accessControlAddress).getNumberOfValidators();
         address[] memory validatorsSet = IAccessControl(accessControlAddress).getValidatorsSet();
-        uint rewardPerWORK = currentRewardBalance/numberOfActiveValidator;
+        uint rewardPerWORK = currentRewardBalance * burnRate / numberOfActiveValidator / rateDecimals;
         for(uint i = 0; i < validatorsSet.length; i++){
             if(validatorsSet[i] != address(0x0) && IAccessControl(accessControlAddress).isValidator(validatorsSet[i])){
                 //reset balance of WORK to 0

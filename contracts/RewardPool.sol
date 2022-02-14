@@ -2,12 +2,13 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./IAccessControl.sol";
 import "./RewardPoolStorage.sol";
 
 
-contract RewardPool is Ownable, RewardPoolStorage{
-    constructor(address _rewardToken, address _accessControl) {
+contract RewardPool is Ownable, Initializable, RewardPoolStorage{
+    function initialize(address _rewardToken, address _accessControl) external initializer(){
         rewardToken = _rewardToken;
         accessControlAddress = _accessControl;
     }

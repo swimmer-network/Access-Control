@@ -1,14 +1,15 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./ConsensusStorage.sol";
 
-contract Consensus is Ownable, ConsensusStorage{
-    // address public rewardToken;
-    constructor (uint _blockLimit, uint _gasPrice, address _rewardToken) {
+contract Consensus is Ownable, Initializable, ConsensusStorage{
+    function initialize (uint _blockLimit, uint _gasPrice, uint _blockReward) external initializer(){
         blockLimit = _blockLimit;
         gasPrice = _gasPrice;
-        // rewardToken = _rewardToken;
+        blockReward = _blockReward;
+        isPermissioned = true;
     }
 
     function changeBlockLimit(uint newBlockLimit) external onlyOwner(){
@@ -20,4 +21,8 @@ contract Consensus is Ownable, ConsensusStorage{
         gasPrice = gasPrice;
     }
 
+    function revokePermissioned() external onlyOwner(){
+        require(isPermissioned == true, "Consensus: can not update permission");
+        isPermissioned = false;
+    }
 }

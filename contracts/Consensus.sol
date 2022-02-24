@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./ConsensusStorage.sol";
 
 contract Consensus is Ownable, Initializable, ConsensusStorage{
-    function initialize (uint _blockLimit, uint _gasPrice, uint _blockReward) external initializer(){
+    function initialize (uint _blockLimit, uint _gasPrice, uint _blockReward) external initializer() {
         blockLimit = _blockLimit;
         gasPrice = _gasPrice;
         blockReward = _blockReward;

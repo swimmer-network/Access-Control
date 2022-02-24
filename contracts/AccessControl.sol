@@ -58,7 +58,7 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
             validatorsSet.push(validators[i]);
             _grantRole(VALIDATOR_ROLE, validators[i]);
         }
-        numberOfValidators += validators.length;
+        // numberOfValidators += validators.length;
     }
 
     function removeValidators(uint[] memory indexes) external onlyRole(DEFAULT_ADMIN_ROLE){
@@ -67,15 +67,11 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
             delete validatorsSet[indexes[i]];
             _revokeRole(VALIDATOR_ROLE, validatorsSet[indexes[i]]);
         }
-        numberOfValidators -= indexes.length;
+        // numberOfValidators -= indexes.length;
     }
     
     function getValidatorsSet() external view returns(address[] memory){
         return validatorsSet;
-    }
-
-    function getNumberOfValidators() external view returns(uint){
-        return numberOfValidators;
     }
 
     function isValidator(address add) external view returns(bool){

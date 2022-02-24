@@ -14,18 +14,42 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
         burnRate = _burnRate;
     }
 
+    function addValidatorsStake(address[] memory validators, uint[] memory amounts) external onlyOwner(){
+        require(validators.length == amounts.length, "invalid length");
+        uint _total = totalStake;
+        for(uint i = 0; i < validators.length; i++){
+            if(validators[i] != address(0x0) && IAccessControl(accessControlAddress).isValidator(validators[i])){
+                stakedAmounts[validators[i]] += amounts[i];
+                _total += amounts[i];
+            }
+        }
+        totalStake = _total;
+    }
+
+    function reduceValidatorsStake(address[] memory validators, uint[] memory amounts) external onlyOwner(){
+        require(validators.length == amounts.length, "invalid length");
+        uint _total = totalStake;
+        for(uint i = 0; i < validators.length; i++){
+            if(validators[i] != address(0x0) && IAccessControl(accessControlAddress).isValidator(validators[i])){
+                require(stakedAmounts[validators[i]] >= amounts[i], "inefficient staked amount");
+                stakedAmounts[validators[i]] -= amounts[i];
+                _total -= amounts[i];
+            }
+        }
+        totalStake = _total;
+    }
+
     function claimReward() external{
         require(lastClaimedTime + claimedPeriod < block.timestamp, "RewardPool: not allow to claim");
         uint currentRewardBalance = IERC20(rewardToken).balanceOf(address(this));
-        uint numberOfActiveValidator = IAccessControl(accessControlAddress).getNumberOfValidators();
         address[] memory validatorsSet = IAccessControl(accessControlAddress).getValidatorsSet();
-        uint rewardPerWORK = currentRewardBalance * burnRate / numberOfActiveValidator / rateDecimals;
+        uint rewardPerStake = currentRewardBalance * CRAExponent * burnRate / totalStake / rateDecimals;
         for(uint i = 0; i < validatorsSet.length; i++){
             if(validatorsSet[i] != address(0x0) && IAccessControl(accessControlAddress).isValidator(validatorsSet[i])){
-                //reset balance of WORK to 0
-                balanceOfWork[validatorsSet[i]] = 0;
+                // validator reward
+                uint _reward = rewardPerStake * stakedAmounts[validatorsSet[i]] / CRAExponent;
                 // transfer reward to validators
-                IERC20(rewardToken).transfer(validatorsSet[i], rewardPerWORK);
+                IERC20(rewardToken).transfer(validatorsSet[i], _reward);
             }
         }
         lastClaimedTime = block.timestamp;
@@ -35,7 +59,7 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
         claimedPeriod = newPeriod;
     }
 
-    function balanceOf(address validator) external view returns(uint256){
-        return balanceOfWork[validator];
+    function balanceOfStake(address validator) external view returns(uint256){
+        return stakedAmounts[validator];
     }
 }

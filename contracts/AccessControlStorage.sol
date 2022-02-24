@@ -19,5 +19,4 @@ contract SwimmerNetworkACStorage {
     }
     mapping (address => ContractInfo) feeCoverInfo;
     address[] public validatorsSet;
-    uint256 public numberOfValidators;
 }

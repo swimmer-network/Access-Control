@@ -5,11 +5,13 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./ConsensusStorage.sol";
 
 contract Consensus is Ownable, Initializable, ConsensusStorage{
-    function initialize (uint _blockLimit, uint _gasPrice, uint _blockReward) external initializer() {
+
+    function initialize (address _owner, uint _blockLimit, uint _gasPrice, uint _blockReward) external initializer(){
         blockLimit = _blockLimit;
         gasPrice = _gasPrice;
         blockReward = _blockReward;
         isPermissioned = true;
+        _transferOwnership(_owner);
     }
 
     function changeBlockLimit(uint newBlockLimit) external onlyOwner(){
@@ -18,7 +20,7 @@ contract Consensus is Ownable, Initializable, ConsensusStorage{
     }
 
     function changeGasPrice(uint newGasPrice) external onlyOwner(){
-        gasPrice = gasPrice;
+        gasPrice = newGasPrice;
     }
 
     function revokePermissioned() external onlyOwner(){

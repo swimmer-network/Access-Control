@@ -8,10 +8,11 @@ import "./RewardPoolStorage.sol";
 
 
 contract RewardPool is Ownable, Initializable, RewardPoolStorage{
-    function initialize(address _rewardToken, address _accessControl, uint _burnRate) external initializer() onlyOwner(){
+    function initialize(address _owner, address _rewardToken, address _accessControl, uint _burnRate) external initializer() {
         rewardToken = _rewardToken;
         accessControlAddress = _accessControl;
         burnRate = _burnRate;
+        _transferOwnership(_owner);
     }
 
     function addValidatorsStake(address[] memory validators, uint[] memory amounts) external onlyOwner(){

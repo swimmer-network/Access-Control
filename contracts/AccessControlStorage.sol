@@ -17,6 +17,6 @@ contract SwimmerNetworkACStorage {
         address owner;
         bool feeCover;
     }
-    mapping (address => ContractInfo) feeCoverInfo;
+    mapping (address => ContractInfo) public feeCoverInfo;
     address[] public validatorsSet;
 }

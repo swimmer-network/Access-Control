@@ -3,7 +3,7 @@ pragma solidity 0.8.10;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "./IAccessControl.sol";
+import "./interface/IAccessControl.sol";
 import "./RewardPoolStorage.sol";
 
 
@@ -52,6 +52,8 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
                 IERC20(rewardToken).transfer(validatorsSet[i], _reward);
             }
         }
+        // burn
+        IERC20(rewardToken).transfer(address(0x0), IERC20(rewardToken).balanceOf(address(this)));
         lastClaimedTime = block.timestamp;
     }
 

@@ -3,9 +3,14 @@ pragma solidity 0.8.10;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./AccessControlStorage.sol";
+import "./interface/IOwnable.sol";
 
 
 contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStorage{
+    event SetFeeCover(address _contract, address owner, bool onoff);
+    event SetBlacklist(address add, uint banningTime);
+    event RemoveBlacklist(address add);
+
     function initialize(address[] memory admins) external initializer() {
         firstBanningTime = 1 hours;
         secondBanningTime = 7955107200; // 2222/Feb/02 00:00:00
@@ -25,9 +30,11 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
         else{
             blockedTime[add] = secondBanningTime;
         }
+        emit SetBlacklist(add, blockedTime[add]);
     }
     function removeBlacklist(address add) external onlyRole(SETBLACKLIST_ROLE){
-            blockedTime[add] = 0;
+        blockedTime[add] = 0;
+        emit RemoveBlacklist(add);
     }
 
     function isBlacklist(address add) external view returns(bool){
@@ -37,19 +44,14 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
     function setFeeCover(address _contract, bool onoff) external onlyRole(CREATE_CONTRACT_ROLE){
         ContractInfo storage info = feeCoverInfo[_contract];
         if(info.owner == address(0x0)){
+            require(IOwnable(_contract).owner() == _msgSender(), "not contract owner");
             info.owner = _msgSender();
         }
         else{
             require(info.owner == _msgSender(), "Invalid owner");
         }
         info.feeCover = onoff;
-    }
-
-    function changeContractOwner(address _contract, address newOwner) external onlyRole(CREATE_CONTRACT_ROLE){
-        require(newOwner != address(0x0), "Invalid address");
-        ContractInfo storage info = feeCoverInfo[_contract];
-        require(info.owner == _msgSender(), "Invalid caller");
-        info.owner = newOwner;
+        emit SetFeeCover(_contract, _msgSender(), onoff);
     }
 
     function addValidators(address[] memory validators) external onlyRole(DEFAULT_ADMIN_ROLE){
@@ -58,7 +60,6 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
             validatorsSet.push(validators[i]);
             _grantRole(VALIDATOR_ROLE, validators[i]);
         }
-        // numberOfValidators += validators.length;
     }
 
     function removeValidators(uint[] memory indexes) external onlyRole(DEFAULT_ADMIN_ROLE){
@@ -67,7 +68,6 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
             delete validatorsSet[indexes[i]];
             _revokeRole(VALIDATOR_ROLE, validatorsSet[indexes[i]]);
         }
-        // numberOfValidators -= indexes.length;
     }
     
     function getValidatorsSet() external view returns(address[] memory){

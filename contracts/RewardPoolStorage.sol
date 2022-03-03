@@ -10,4 +10,7 @@ contract RewardPoolStorage {
     uint256 public claimedPeriod;
     uint256 public constant rateDecimals = 10**4;
     uint256 public constant CRAExponent = 10**12;
+    uint256 public minimumStake;
+    uint256 public maximumStake;
+    uint public baseRewardRate;
 }

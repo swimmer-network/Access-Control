@@ -59,6 +59,7 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
         for(uint i = 0; i < validators.length; i++){
             validatorsSet.push(validators[i]);
             _grantRole(VALIDATOR_ROLE, validators[i]);
+            numberOfActiveValidators += 1;
         }
     }
 
@@ -67,6 +68,7 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
         for(uint i = 0; i < indexes.length; i++){
             delete validatorsSet[indexes[i]];
             _revokeRole(VALIDATOR_ROLE, validatorsSet[indexes[i]]);
+            numberOfActiveValidators -= 1;
         }
     }
     

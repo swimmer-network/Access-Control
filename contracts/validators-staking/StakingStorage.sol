@@ -6,7 +6,10 @@ contract StakingStorage {
     uint public minStakedAmount;
     uint public maxStakedAmount;
     uint public unstakedEpoch; // wait for a certain period to withdraw stake
-    // uint256 public startTime;
+    uint public startTime;
+    uint public slippage; // after endtime + slippage, validators donot withdraw stakes will keep staking
+    uint public constant day = 86400; // 1 day = 86400s
+    mapping(address => bool) public whitelist;
 
     struct Validator {
         uint stakedAmount;

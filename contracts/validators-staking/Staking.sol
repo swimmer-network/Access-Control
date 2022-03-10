@@ -9,20 +9,20 @@ import "./libs/Ownable2.sol";
 
 contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
 
-    event Deposit(address indexed staker, uint amount);
+    event Deposit(address indexed staker, uint amount, uint depositTime);
     event AddMoreStake(address indexed staker, uint amount);
     // event StartUnstaking(address indexed staker, uint amount);
     event Unstake(address indexed staker, uint amount);
     event SetWhitelist(address indexed staker, bool isEnable);
 
-    function initialize(address cra, uint min, uint max, uint _startTime, uint _slippage) external initializer() {
+    function initialize(address cra, uint min, uint max, uint _slippage) external initializer() {
         _setOwner(msg.sender);
         CRAToken = cra;
         unstakedEpoch = 30; // wait to 30 days to withdraw stake
         minStakedAmount = min;
         maxStakedAmount = max;
-        startTime = _startTime;
         slippage = _slippage;
+        // startTime = _startTime;
     }
 
     function deposit(uint amount) external whenNotPaused() {
@@ -32,7 +32,8 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
 
         IERC20(CRAToken).transferFrom(msg.sender, address(this), amount);
         user.stakedAmount = amount;
-        emit Deposit(msg.sender, amount);
+        user.depositTime = block.timestamp;
+        emit Deposit(msg.sender, amount, block.timestamp);
     }
 
     function addMoreStake(uint amount) external whenNotPaused() {
@@ -46,15 +47,15 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
         emit AddMoreStake(msg.sender, amount);
     }
 
-    function calculate() internal view returns(uint){
-        uint r = (block.timestamp - startTime)/day;
+    function calculate(uint _depositTime) internal view returns(uint){
+        uint r = (block.timestamp - _depositTime)/day;
         return r % unstakedEpoch;
     }
 
     function unstake() external whenNotPaused() {
         require(whitelist[msg.sender] == true, "STAKING: not in whitelist");
         Validator storage user = validatorInfo[msg.sender];
-        uint r = calculate();
+        uint r = calculate(user.depositTime);
         require(r < slippage, "STAKING: can not unstake due to overtime");
         uint amount = user.stakedAmount;
         user.stakedAmount = 0; //update staked amount
@@ -83,9 +84,9 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
         unstakedEpoch = value;
     }
 
-    function changeStartsTime(uint256 value) external onlyOwner() {
-        startTime = value;
-    }
+    // function changeStartsTime(uint256 value) external onlyOwner() {
+    //     startTime = value;
+    // }
 
     function changeSlippage(uint256 value) external onlyOwner() {
         slippage = value;

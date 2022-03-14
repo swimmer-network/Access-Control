@@ -51,4 +51,23 @@ contract TUS is Ownable, Initializable, ERC20, Pausable {
     ) whenNotPaused() internal override {
         super._beforeTokenTransfer(from, to, amount);
     }
+
+    function _spendAllowance(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal {
+        uint256 currentAllowance = allowance(owner, spender);
+        if (currentAllowance != type(uint256).max) {
+            require(currentAllowance >= amount, "ERC20: insufficient allowance");
+            unchecked {
+                _approve(owner, spender, currentAllowance - amount);
+            }
+        }
+    }
+
+     function burnFrom(address account, uint256 amount) public {
+        _spendAllowance(account, _msgSender(), amount);
+        _burn(account, amount);
+    }
 }

@@ -47,8 +47,8 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
         emit AddMoreStake(msg.sender, amount);
     }
 
-    function calculate(uint _depositTime) internal view returns(uint){
-        uint r = (block.timestamp - _depositTime)/day;
+    function calculate(uint depositTime) internal view returns(uint){
+        uint r = (block.timestamp - depositTime)/day;
         return r % unstakedEpoch;
     }
 

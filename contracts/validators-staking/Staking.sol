@@ -15,6 +15,11 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
     event Unstake(address indexed staker, uint amount);
     event SetWhitelist(address indexed staker, bool isEnable);
 
+    modifier onlyWhitelist() {
+        require(whitelist[msg.sender] ==  true, "STAKING: Only whitelist");
+        _;
+    }
+
     function initialize(address cra, uint min, uint max, uint _slippage) external initializer() {
         _setOwner(msg.sender);
         CRAToken = cra;
@@ -25,8 +30,8 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
         // startTime = _startTime;
     }
 
-    function deposit(uint amount) external whenNotPaused() {
-        require(whitelist[msg.sender] == true, "STAKING: not in whitelist");
+    function deposit(uint amount) external whenNotPaused() onlyWhitelist(){
+        // require(whitelist[msg.sender] == true, "STAKING: not in whitelist");
         require(amount > minStakedAmount, "STAKING: less than minimum amount");
         Validator storage user = validatorInfo[msg.sender];
 
@@ -36,8 +41,8 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
         emit Deposit(msg.sender, amount, block.timestamp);
     }
 
-    function addMoreStake(uint amount) external whenNotPaused() {
-        require(whitelist[msg.sender] == true, "STAKING: not in whitelist");
+    function addMoreStake(uint amount) external whenNotPaused() onlyWhitelist() {
+        // require(whitelist[msg.sender] == true, "STAKING: not in whitelist");
         Validator storage user = validatorInfo[msg.sender];
         uint current = user.stakedAmount;
         require(current + amount <= maxStakedAmount, "STAKING: exceed max amount");
@@ -52,8 +57,8 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
         return r % unstakedEpoch;
     }
 
-    function unstake() external whenNotPaused() {
-        require(whitelist[msg.sender] == true, "STAKING: not in whitelist");
+    function unstake() external whenNotPaused() onlyWhitelist(){
+        // require(whitelist[msg.sender] == true, "STAKING: not in whitelist");
         Validator storage user = validatorInfo[msg.sender];
         uint r = calculate(user.depositTime);
         require(r < slippage, "STAKING: can not unstake due to overtime");

@@ -14,7 +14,6 @@ contract StakingStorage {
     struct Validator {
         uint stakedAmount;
         uint depositTime; // user can only withdraw stake after unstakedEpoch (30) days
-        // uint unstakingAmount;
     }
 
     mapping (address => Validator) public validatorInfo;

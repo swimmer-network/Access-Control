@@ -8,6 +8,13 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 contract CRAM is Ownable, Initializable, ERC20, Pausable {
     mapping(address=>bool) public minters;
     bool public isTransferable;
+
+    mapping(address=>bool) public senderWhitelist;
+    mapping(address=>bool) public receipientWhitelist;
+
+    event SetReceipientWhitelist(address addr, bool isEnabled);
+    event SetSenderWhitelist(address addr, bool isEnabled);
+
     modifier onlyMinter(address addr) {
         require(minters[addr], "CRAM: Only minter");
         _;
@@ -43,6 +50,10 @@ contract CRAM is Ownable, Initializable, ERC20, Pausable {
     function initialize(address _owner) external initializer() {
         minters[_owner] = true;
         _transferOwnership(_owner);
+        senderWhitelist[_owner] = true;
+        receipientWhitelist[_owner] = true;
+        senderWhitelist[address(0x0)] = true;
+        receipientWhitelist[address(0x0)] = true;
     }
 
     function mint(address _to, uint256 _amount) onlyMinter(msg.sender) external {
@@ -72,6 +83,13 @@ contract CRAM is Ownable, Initializable, ERC20, Pausable {
         uint256 amount
     ) whenNotPaused() internal override {
         super._beforeTokenTransfer(from, to, amount);
+        _checkWhitelist(from, to);
+    }
+
+    function _checkWhitelist(address from, address to) internal {
+        if (!isTransferable) {
+            require(senderWhitelist[from] || receipientWhitelist[to], "CRAM: not in whitelist");
+        }
     }
 
     /**
@@ -104,5 +122,15 @@ contract CRAM is Ownable, Initializable, ERC20, Pausable {
      function burnFrom(address account, uint256 amount) public {
         _spendAllowance(account, _msgSender(), amount);
         _burn(account, amount);
+    }
+
+    // Whitelist
+    function setSenderWhitelist(address addr, bool enabled) onlyOwner() external {
+        senderWhitelist[addr] = enabled;
+        emit SetSenderWhitelist(addr, enabled);
+    }
+    function setReceipientWhitelist(address addr, bool enabled) onlyOwner() external {
+        receipientWhitelist[addr] = enabled;
+        emit SetReceipientWhitelist(addr, enabled);
     }
 }

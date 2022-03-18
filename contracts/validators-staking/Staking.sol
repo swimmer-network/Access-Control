@@ -23,7 +23,7 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
     function initialize(address cra, uint min, uint max, uint _slippage) external initializer() {
         _setOwner(msg.sender);
         CRAToken = cra;
-        unstakedEpoch = 30; // wait to 30 days to withdraw stake
+        unstakedEpoch = 28; // wait to 28 days to withdraw stake
         minStakedAmount = min;
         maxStakedAmount = max;
         slippage = _slippage;

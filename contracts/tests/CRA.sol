@@ -8,4 +8,7 @@ contract CRA is ERC20 {
     constructor () ERC20("CRA", "CRA") {
         _mint(msg.sender, MAX_SUPPLY);
     }
+    function burn(uint256 amount) external{
+        _burn(msg.sender, amount);
+    }
 }

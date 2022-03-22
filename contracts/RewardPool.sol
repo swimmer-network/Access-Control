@@ -72,13 +72,14 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
         uint _reward = baseRewardPerValidator / CRAExponent;
         for(uint i = 0; i < validatorsSet.length; i++){
             if(validatorsSet[i] != address(0x0) && IAccessControl(accessControlAddress).isValidator(validatorsSet[i])){
-                // transfer base reward to validators
-                IERC20(rewardToken).transfer(validatorsSet[i], _reward);
                 // if stake more than minimum
                 if(stakedAmounts[validatorsSet[i]] > minimumStake){
                     uint _r = (stakedAmounts[validatorsSet[i]] - minimumStake) * remainingReward / remainingStake / CRAExponent;
-
-                    IERC20(rewardToken).transfer(validatorsSet[i], _r);
+            
+                    IERC20(rewardToken).transfer(validatorsSet[i], _reward + _r);
+                } else {
+                    // transfer base reward to validators
+                        IERC20(rewardToken).transfer(validatorsSet[i], _reward);
                 }
             }
         }
@@ -104,8 +105,8 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
         uint totalBaseReward = rewardAfterBurn * baseRewardRate / rateDecimals;
         uint remainingReward = rewardAfterBurn - totalBaseReward;
         uint baseRewardPerValidator = totalBaseReward / activeNumber;
-         uint burnAmount = currentRewardBalance - rewardAfterBurn/CRAExponent;
-        return (burnAmount,remainingReward, baseRewardPerValidator, activeNumber);
+        uint burnAmount = currentRewardBalance - rewardAfterBurn/CRAExponent;
+        return (burnAmount, remainingReward, baseRewardPerValidator, activeNumber);
     }
 
     function changeMinimumThreshold(uint newThreshold) external onlyOwner(){

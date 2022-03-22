@@ -66,9 +66,8 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
         require(lastClaimedTime + claimedPeriod < block.timestamp, "RewardPool: not allow to claim");
         // uint currentRewardBalance = IERC20(rewardToken).balanceOf(address(this));
         address[] memory validatorsSet = IAccessControl(accessControlAddress).getValidatorsSet();
-        (uint remainingReward, uint baseRewardPerValidator, uint activeNumber) = _calculateBaseReward();
+        (uint burnAmount, uint remainingReward, uint baseRewardPerValidator, uint activeNumber) = _calculateBaseReward();
         uint remainingStake = totalStake - minimumStake * activeNumber;
-        uint rewardPerTotalRemaingStake = remainingReward * CRAExponent / remainingStake;
         // validator base reward
         uint _reward = baseRewardPerValidator / CRAExponent;
         for(uint i = 0; i < validatorsSet.length; i++){
@@ -84,10 +83,10 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
             }
         }
         // burn
-        if(IERC20(rewardToken).balanceOf(address(this)) > 0){
-            ITokenBurn(rewardToken).burn(IERC20(rewardToken).balanceOf(address(this)));
+        if(burnAmount > 0){
+            ITokenBurn(rewardToken).burn(burnAmount);
         }
-        lastClaimedTime = block.timestamp;
+        lastClaimedTime = lastClaimedTime + claimedPeriod;
     }
 
     function changeClaimPeriod(uint newPeriod) external onlyOwner(){
@@ -98,21 +97,16 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
         return stakedAmounts[validator];
     }
 
-    function _calculateBaseReward() internal view returns(uint,uint,uint){
+    function _calculateBaseReward() internal view returns(uint,uint,uint,uint){
         uint currentRewardBalance = IERC20(rewardToken).balanceOf(address(this));
         uint activeNumber = IAccessControl(accessControlAddress).numberOfActiveValidators();
         uint rewardAfterBurn = currentRewardBalance * CRAExponent * (rateDecimals - burnRate) / rateDecimals;
         uint totalBaseReward = rewardAfterBurn * baseRewardRate / rateDecimals;
         uint remainingReward = rewardAfterBurn - totalBaseReward;
         uint baseRewardPerValidator = totalBaseReward / activeNumber;
-        return (remainingReward, baseRewardPerValidator, activeNumber);
+         uint burnAmount = currentRewardBalance - rewardAfterBurn/CRAExponent;
+        return (burnAmount,remainingReward, baseRewardPerValidator, activeNumber);
     }
-
-    function calculateBaseReward() external view returns(uint,uint,uint){
-        (uint remainingReward, uint baseRewardPerValidator, uint activeNumber) = _calculateBaseReward();
-        return (remainingReward, baseRewardPerValidator, activeNumber);
-    }
-
 
     function changeMinimumThreshold(uint newThreshold) external onlyOwner(){
         require(newThreshold > 0, "must be greater than 0");

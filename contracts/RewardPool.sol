@@ -75,11 +75,10 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
                 // if stake more than minimum
                 if(stakedAmounts[validatorsSet[i]] > minimumStake){
                     uint _r = (stakedAmounts[validatorsSet[i]] - minimumStake) * remainingReward / remainingStake / CRAExponent;
-            
                     IERC20(rewardToken).transfer(validatorsSet[i], _reward + _r);
                 } else {
                     // transfer base reward to validators
-                        IERC20(rewardToken).transfer(validatorsSet[i], _reward);
+                    IERC20(rewardToken).transfer(validatorsSet[i], _reward);
                 }
             }
         }

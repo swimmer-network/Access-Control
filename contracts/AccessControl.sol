@@ -43,7 +43,9 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
 
     function setFeeCover(address _contract, bool onoff) external onlyRole(CREATE_CONTRACT_ROLE){
         require(IOwnable(_contract).owner() == _msgSender(), "not contract owner");
-        feeCoverInfo[_contract] = onoff;
+        ContractInfo storage info = feeCoverInfo[_contract];
+
+        info.feeCover = onoff;
         emit SetFeeCover(_contract, _msgSender(), onoff);
     }
 

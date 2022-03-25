@@ -13,7 +13,12 @@ contract SwimmerNetworkACStorage {
     uint256 public firstBanningTime;
     uint256 public secondBanningTime;
 
-    mapping (address => bool) public feeCoverInfo;
+    struct ContractInfo{
+        address owner;
+        bool feeCover;
+    }
+
+    mapping (address => ContractInfo) public feeCoverInfo;
     address[] public validatorsSet;
     uint public numberOfActiveValidators;
 }

@@ -6,10 +6,10 @@ import "./ConsensusStorage.sol";
 
 contract Consensus is Ownable, Initializable, ConsensusStorage{
 
-    function initialize (address _owner, uint _blockLimit, uint _gasPrice, uint _blockReward) external initializer(){
+    function initialize (address _owner, uint _blockLimit, uint _gasPrice) external initializer(){
         blockLimit = _blockLimit;
         gasPrice = _gasPrice;
-        blockReward = _blockReward;
+        // blockReward = _blockReward;
         isPermissioned = true;
         _transferOwnership(_owner);
     }

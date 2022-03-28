@@ -67,7 +67,7 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
             lastClaimedTime = block.timestamp;
         }
         else{
-            require(lastClaimedTime + claimedPeriod < block.timestamp, "RewardPool: not allow to claim");
+            require(lastClaimedTime < block.timestamp, "RewardPool: not allow to claim");
         }
         address[] memory validatorsSet = IAccessControl(accessControlAddress).getValidatorsSet();
         (uint burnAmount, uint remainingReward, uint baseRewardPerValidator, uint activeNumber) = _calculateBaseReward();

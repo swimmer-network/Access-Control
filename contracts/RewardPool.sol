@@ -63,8 +63,12 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
     }
     
     function claimReward() external{
-        require(lastClaimedTime + claimedPeriod < block.timestamp, "RewardPool: not allow to claim");
-        // uint currentRewardBalance = IERC20(rewardToken).balanceOf(address(this));
+        if(lastClaimedTime == 0){
+            lastClaimedTime = block.timestamp;
+        }
+        else{
+            require(lastClaimedTime + claimedPeriod < block.timestamp, "RewardPool: not allow to claim");
+        }
         address[] memory validatorsSet = IAccessControl(accessControlAddress).getValidatorsSet();
         (uint burnAmount, uint remainingReward, uint baseRewardPerValidator, uint activeNumber) = _calculateBaseReward();
         uint remainingStake = totalStake - minimumStake * activeNumber;

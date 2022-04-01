@@ -15,7 +15,6 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
         firstBanningTime = 1 hours;
         secondBanningTime = 7955107200; // 2222/Feb/02 00:00:00
         for(uint i = 0; i < admins.length; i++){
-            _grantRole(CREATE_CONTRACT_ROLE, admins[i]);
             _grantRole(VALIDATOR_ROLE, admins[i]);
             _grantRole(SETBLACKLIST_ROLE, admins[i]);
             _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);
@@ -41,7 +40,7 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
         return blockedTime[add] > block.timestamp;
     }
 
-    function setFeeCover(address _contract, bool onoff) external onlyRole(CREATE_CONTRACT_ROLE){
+    function setFeeCover(address _contract, bool onoff) external {
         require(IOwnable(_contract).owner() == _msgSender(), "not contract owner");
         ContractInfo storage info = feeCoverInfo[_contract];
 

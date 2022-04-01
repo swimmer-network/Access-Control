@@ -1,8 +1,6 @@
 pragma solidity 0.8.10;
 
 contract SwimmerNetworkACStorage {
-    // keccak256("CREATE_CONTRACT")
-    bytes32 public constant CREATE_CONTRACT_ROLE = 0x2878dc9491c331c17159dce80802b76a6327969161ee6af2c3ea3247eeb6350b;
     // keccak256("VALIDATOR")
     bytes32 public constant VALIDATOR_ROLE = 0xa95257aebefccffaada4758f028bce81ea992693be70592f620c4c9a0d9e715a;
     // keccak256("ADD_REMOVE_FROM_TO_LIST")

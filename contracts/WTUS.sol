@@ -88,6 +88,8 @@ contract WTUS is Ownable, ERC20, Pausable {
     }
 
     function deposit() public payable {
+        // Burn native token by sending to BLACKHOLE_ADDRESS
+        payable(BLACKHOLE_ADDRESS).transfer(msg.value);
         _mint(msg.sender, msg.value);
         emit Deposit(msg.sender, msg.value);
     }

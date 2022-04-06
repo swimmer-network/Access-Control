@@ -10,6 +10,8 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
     event SetFeeCover(address _contract, address owner, bool onoff);
     event SetBlacklist(address add, uint banningTime);
     event RemoveBlacklist(address add);
+    event AddWhitelistedUser(address _contract, address user, bool onoff);
+    event AddWhitelistedFunctionSigs(address _contract, bytes4 sig, bool onoff);
 
     function initialize(address[] memory admins) external initializer() {
         firstBanningTime = 1 hours;
@@ -42,9 +44,8 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
 
     function setFeeCover(address _contract, bool onoff) external {
         require(IOwnable(_contract).owner() == _msgSender(), "not contract owner");
-        ContractInfo storage info = feeCoverInfo[_contract];
+        feeCoverInfo[_contract] = onoff;
 
-        info.feeCover = onoff;
         emit SetFeeCover(_contract, _msgSender(), onoff);
     }
 
@@ -72,5 +73,24 @@ contract SwimmerNetworkAC is AccessControl, Initializable, SwimmerNetworkACStora
 
     function isValidator(address add) external view returns(bool){
         return hasRole(VALIDATOR_ROLE, add);
+    }
+
+    function addWhitelistedUser(address _contract, address[] memory users, bool[] memory onoff) external{
+        require(IOwnable(_contract).owner() == _msgSender(), "not contract owner");
+        require(users.length == onoff.length, "AC: invalid parameters");
+        for(uint i = 0; i < users.length; i++){
+            WhitelistedAddresses[_contract][users[i]] = onoff[i];
+            emit AddWhitelistedUser(_contract, users[i], onoff[i]);
+        }
+    }
+
+    function addWhitelistedFunctionSigs(address _contract, bytes4[] memory functionSigs, bool[] memory onoff) external{
+        require(IOwnable(_contract).owner() == _msgSender(), "not contract owner");
+        require(functionSigs.length == onoff.length, "AC: invalid parameters");
+        for(uint i = 0; i < functionSigs.length; i++){
+            WhitelistedFunctionSigs[_contract][functionSigs[i]] = onoff[i];
+            emit AddWhitelistedFunctionSigs(_contract, functionSigs[i], onoff[i]);
+
+        }
     }
 }

@@ -16,7 +16,9 @@ contract SwimmerNetworkACStorage {
         bool feeCover;
     }
 
-    mapping (address => ContractInfo) public feeCoverInfo;
+    mapping (address => bool) public feeCoverInfo;
     address[] public validatorsSet;
     uint public numberOfActiveValidators;
+    mapping (address => mapping (address => bool)) public WhitelistedAddresses;
+    mapping (address => mapping (bytes4 => bool)) public WhitelistedFunctionSigs;
 }

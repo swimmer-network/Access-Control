@@ -9,7 +9,6 @@ contract Consensus is Ownable, Initializable, ConsensusStorage{
     function initialize (address _owner, uint _blockLimit, uint _gasPrice) external initializer(){
         blockLimit = _blockLimit;
         gasPrice = _gasPrice;
-        // blockReward = _blockReward;
         isPermissioned = true;
         _transferOwnership(_owner);
     }
@@ -26,5 +25,9 @@ contract Consensus is Ownable, Initializable, ConsensusStorage{
     function revokePermissioned() external onlyOwner(){
         require(isPermissioned == true, "Consensus: can not update permission");
         isPermissioned = false;
+    }
+
+    function changeRewardPool(address _pool) external onlyOwner(){
+        rewardPool = _pool;
     }
 }

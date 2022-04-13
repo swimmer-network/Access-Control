@@ -9,9 +9,9 @@ import "./RewardPoolStorage.sol";
 
 
 contract RewardPool is Ownable, Initializable, RewardPoolStorage{
-    function initialize(address _owner, address _rewardToken, address _accessControl, uint _burnRate, uint minimum, uint maximum, uint baseRate)
+    function initialize(address _owner, address _accessControl, uint _burnRate, uint minimum, uint maximum, uint baseRate)
         external initializer() {
-        rewardToken = _rewardToken;
+        // rewardToken = _rewardToken;
         accessControlAddress = _accessControl;
         burnRate = _burnRate;
         minimumStake = minimum;
@@ -79,16 +79,17 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
                 // if stake more than minimum
                 if(stakedAmounts[validatorsSet[i]] > minimumStake){
                     uint _r = (stakedAmounts[validatorsSet[i]] - minimumStake) * remainingReward / remainingStake / CRAExponent;
-                    IERC20(rewardToken).transfer(validatorsSet[i], _reward + _r);
+                    payable(validatorsSet[i]).transfer(_reward + _r);
                 } else {
                     // transfer base reward to validators
-                    IERC20(rewardToken).transfer(validatorsSet[i], _reward);
+                    payable(validatorsSet[i]).transfer(_reward);
+
                 }
             }
         }
         // burn
         if(burnAmount > 0){
-            ITokenBurn(rewardToken).burn(burnAmount);
+            payable(address(0x0)).transfer(burnAmount);
         }
         lastClaimedTime = lastClaimedTime + claimedPeriod;
     }
@@ -102,7 +103,7 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
     }
 
     function _calculateBaseReward() internal view returns(uint,uint,uint,uint){
-        uint currentRewardBalance = IERC20(rewardToken).balanceOf(address(this));
+        uint currentRewardBalance = address(this).balance;
         uint activeNumber = IAccessControl(accessControlAddress).numberOfActiveValidators();
         uint rewardAfterBurn = currentRewardBalance * CRAExponent * (rateDecimals - burnRate) / rateDecimals;
         uint totalBaseReward = rewardAfterBurn * baseRewardRate / rateDecimals;
@@ -120,5 +121,8 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
     function changeMaximumThreshold(uint newThreshold) external onlyOwner(){
         require(newThreshold > minimumStake, "must be greater than minimum");
         maximumStake = newThreshold;
+    }
+    fallback() external payable {
+        
     }
 }

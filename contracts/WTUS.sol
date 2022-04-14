@@ -10,7 +10,7 @@ contract WTUS is Ownable, ERC20, Pausable {
     mapping(address=>bool) public minters;
     address constant MINTER_ADDRESS = 0x0200000000000000000000000000000000000001;
     // Designated Blackhole Address
-    address constant BLACKHOLE_ADDRESS = 0x0100000000000000000000000000000000000000;
+    address constant BLACKHOLE_ADDRESS = 0x0000000000000000000000000000000000000000;
     string private constant TOKEN_NAME = "Wrapped Treasure Under Sea";
     string private constant TOKEN_SYMBOL = "WTUS";
 

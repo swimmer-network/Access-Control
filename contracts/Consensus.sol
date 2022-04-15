@@ -14,7 +14,7 @@ contract Consensus is Ownable, Initializable, ConsensusStorage{
     }
 
     function changeBlockLimit(uint newBlockLimit) external onlyOwner(){
-        require(newBlockLimit > 0, "Invalid Block Limit");
+        require(newBlockLimit > 2000000, "Invalid Block Limit");
         blockLimit = newBlockLimit;
     }
 

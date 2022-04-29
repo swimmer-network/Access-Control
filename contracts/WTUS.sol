@@ -3,20 +3,20 @@ pragma solidity 0.8.10;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-// import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./interface/INativeMinter.sol";
 
 contract WTUS is Ownable, ERC20, Pausable {
     mapping(address=>bool) public minters;
-    address constant MINTER_ADDRESS = 0x0200000000000000000000000000000000000001;
+
     // Designated Blackhole Address
     address constant BLACKHOLE_ADDRESS = 0x0000000000000000000000000000000000000000;
     string private constant TOKEN_NAME = "Wrapped Treasure Under Sea";
     string private constant TOKEN_SYMBOL = "WTUS";
 
-    INativeMinter nativeMinter = INativeMinter(MINTER_ADDRESS);
+    INativeMinter public nativeMinter;
+
     modifier onlyMinter(address addr) {
-        require(minters[addr], "TUS: Only minter");
+        require(minters[addr], "WTUS: Only minter");
         _;
     }
 
@@ -24,16 +24,9 @@ contract WTUS is Ownable, ERC20, Pausable {
     event Deposit(address indexed dst, uint amount);
     event Withdrawal(address indexed src, uint amount);
 
-    constructor (address _owner) ERC20(TOKEN_NAME, TOKEN_SYMBOL) {
-        minters[msg.sender] = true;
-        _transferOwnership(_owner);
-
+    constructor (INativeMinter _nativeMinter) ERC20(TOKEN_NAME, TOKEN_SYMBOL) {
+        nativeMinter = _nativeMinter;
     }
-
-    // function initialize(address _owner) external initializer() {
-    //     minters[_owner] = true;
-    //     _transferOwnership(_owner);
-    // }
 
     function mint(address _to, uint256 _amount) onlyMinter(msg.sender) external {
         nativeMinter.mintNativeCoin(_to, _amount);
@@ -46,6 +39,10 @@ contract WTUS is Ownable, ERC20, Pausable {
     function setMinter(address addr, bool status) onlyOwner() external {
         minters[addr] = status;
         emit SetMinter(addr, status);
+    }
+
+    function setNativeMinterContract(INativeMinter _nativeMinter) onlyOwner() external {
+        nativeMinter = _nativeMinter;
     }
 
     function pause() onlyOwner() external {
@@ -79,7 +76,7 @@ contract WTUS is Ownable, ERC20, Pausable {
     }
 
      function burnFrom(address account, uint256 amount) external {
-        _spendAllowance(account, _msgSender(), amount);
+        _spendAllowance(account, msg.sender, amount);
         _burn(account, amount);
     }
 
@@ -94,11 +91,11 @@ contract WTUS is Ownable, ERC20, Pausable {
         emit Deposit(msg.sender, msg.value);
     }
 
-    function withdraw(uint amount) external {
-        require(balanceOf(msg.sender) >= amount);
+    function withdraw(uint256 amount) external {
+        require(balanceOf(msg.sender) >= amount, "WTUS: insufficient balance");
         _burn(msg.sender, amount);
-        // payable(msg.sender).transfer(amount);
-        nativeMinter.mintNativeCoin(_msgSender(), amount);
+
+        nativeMinter.mintNativeCoin(msg.sender, amount);
         emit Withdrawal(msg.sender, amount);
     }
 }

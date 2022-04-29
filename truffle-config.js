@@ -20,8 +20,8 @@
 
  const HDWalletProvider = require('@truffle/hdwallet-provider');
  const fs = require('fs');
- // const mnemonic = fs.readFileSync(".secret").toString().trim();
- const mnemonic = 'six slab onion tourist topple tip shine rich patient tennis hobby finger';
+ const mnemonic = fs.readFileSync(".secret").toString().trim();
+//  const mnemonic = 'six slab onion tourist topple tip shine rich patient tennis hobby finger';
  require('dotenv').config()
  
  module.exports = {
@@ -41,7 +41,17 @@
        port: 8545,            // Standard Ethereum port (default: none)
        network_id: "*",       // Any network (default: none)
       },
-  
+
+      swimmertest: {
+        provider: () => new HDWalletProvider({
+          mnemonic: mnemonic,
+          providerOrUrl: `https://testnet-rpc.swimmer.network/ext/bc/2hUULz82ZYMKwjBHZybVRyouk38EmcW7UKP4iocf9rghpvfm84/rpc`,
+        }),
+        network_id: "73771",
+        skipDryRun: true,
+        tokenBaseURI: 'http://localhost/',
+      },
+
       ganache: {
         provider: () => new HDWalletProvider(mnemonic,`http://127.0.0.1:7545`),
         network_id: "*",

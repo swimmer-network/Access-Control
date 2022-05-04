@@ -15,12 +15,13 @@ const { ZERO_ADDRESS } = require('@openzeppelin/test-helpers/src/constants');
 
 const BN = helper.BN;
 
-contract("RewardPool", async ([owner, admin, alice, bob, val1, val2,val3,val4,val5, val6,val7,val8,val9,val10,val11,val12,val13,val14,val15,val16,val17,val18,val19,val20]) => {
+contract("RewardPool", async ([owner, admin, alice, bob, ecosystemAddr, val1, val2,val3,val4,val5, val6,val7,val8,val9,val10,val11,val12,val13,val14,val15,val16,val17,val18,val19,val20]) => {
     var erc20, RewardPool;
     var mintAmount = "10000"
     var minStaked = new BN("50000000000000000000000"); // 50k
     var maxStaked = new BN("1000000000000000000000000"); // 1M
     var burnRate = new BN(2000) // 2000/10000 = 20.00%
+    var ecosystemRate = new BN(1000) // 1000/10000 = 10.00%
     var baseRate = new BN(250) // 250/10000 = 2.5%
     var BN1 = new BN(1)
     var PERCENT_BASE = new BN('10000')
@@ -39,7 +40,9 @@ contract("RewardPool", async ([owner, admin, alice, bob, val1, val2,val3,val4,va
         await RewardPool.initialize(
             owner,
             SwimmerAC.address,
+            ecosystemAddr,
             burnRate,
+            '0',
             minStaked,
             maxStaked,
             baseRate
@@ -112,7 +115,7 @@ contract("RewardPool", async ([owner, admin, alice, bob, val1, val2,val3,val4,va
         await SwimmerAC.addValidators([alice, bob], {from: admin});
 
         await web3.eth.sendTransaction({from: owner, to: RewardPool.address, value: '100'})
-        var rewardInfo = calculateReward(new BN('100'), new BN(2));
+        var rewardInfo = calculateReward(new BN('100'), burnRate, new BN(0), new BN(2));
         var tx = await RewardPool.addValidatorsStake([alice, bob], [minStaked, minStaked], {from: owner});
 
         await RewardPool.setStartRewardPeriod(0);
@@ -127,9 +130,9 @@ contract("RewardPool", async ([owner, admin, alice, bob, val1, val2,val3,val4,va
         await SwimmerAC.addValidators([val1, val2, val3, val4, val5], {from: admin});
         await SwimmerAC.removeValidators([4], {from: admin});
 
-        var totalFund = new BN(1000)
+        var totalFund = new BN('10000000000000000000'); // 10eth
         await web3.eth.sendTransaction({from: owner, to: RewardPool.address, value: totalFund})
-        var rewardInfo = calculateReward(totalFund, new BN(4));
+        var rewardInfo = calculateReward(totalFund, burnRate, new BN(0), new BN(4));
         var extraTotalReward = rewardInfo.totalReward.sub(rewardInfo.totalBaseReward);
         
         var val3Stake =  maxStaked.div(new BN(2));
@@ -148,7 +151,6 @@ contract("RewardPool", async ([owner, admin, alice, bob, val1, val2,val3,val4,va
         await RewardPool.setStartRewardPeriod(0);
         await time.increase(time.duration.weeks(3));
         var tx = await RewardPool.claimReward();
-        console.log('4 val gas claim: ', tx.receipt.gasUsed);
 
         checkClaimEvent(tx.receipt.logs[0], val1, rewardInfo.baseReward);
         checkClaimEvent(tx.receipt.logs[1], val2, rewardInfo.baseReward);
@@ -167,7 +169,7 @@ contract("RewardPool", async ([owner, admin, alice, bob, val1, val2,val3,val4,va
 
         var totalFund = new BN(1000)
         await web3.eth.sendTransaction({from: owner, to: RewardPool.address, value: totalFund})
-        var rewardInfo = calculateReward(totalFund, new BN(20));
+        var rewardInfo = calculateReward(totalFund, burnRate, new BN(0), new BN(20));
         var extraTotalReward = rewardInfo.totalReward.sub(rewardInfo.totalBaseReward);
         
         var val3Stake =  maxStaked.div(new BN(2));
@@ -198,6 +200,25 @@ contract("RewardPool", async ([owner, admin, alice, bob, val1, val2,val3,val4,va
 
     })
 
+
+    it("Claim reward: ecosystem", async () => {
+        await RewardPool.changeRate(2500, 1000);
+
+        await SwimmerAC.addValidators([alice, bob], {from: admin});
+
+        await web3.eth.sendTransaction({from: owner, to: RewardPool.address, value: '100'})
+        var rewardInfo = calculateReward(new BN('100'), new BN(2500), new BN(1000), new BN(2));
+        var tx = await RewardPool.addValidatorsStake([alice, bob], [minStaked, minStaked], {from: owner});
+
+        await RewardPool.setStartRewardPeriod(0);
+        await time.increase(time.duration.weeks(3));
+        var tx = await RewardPool.claimReward();
+        expectEvent(tx, 'ClaimReward', {to: alice, amount: rewardInfo.baseReward.toString()});
+        expectEvent(tx, 'ClaimReward', {to: bob, amount: rewardInfo.baseReward.toString()});
+        expectEvent(tx, 'ClaimReward', {to: ZERO_ADDRESS, amount: rewardInfo.burnAmount.toString()});
+        expectEvent(tx, 'ClaimReward', {to: ecosystemAddr, amount: rewardInfo.ecoAmount.toString()});
+    })
+
     it('changeClaimPeriod', async()=>{
         await expectRevert(RewardPool.changeClaimPeriod(1, {from: bob}),"Ownable: caller is not the owner");
         await RewardPool.changeClaimPeriod(10);
@@ -225,13 +246,14 @@ contract("RewardPool", async ([owner, admin, alice, bob, val1, val2,val3,val4,va
     })
 
 
-    function calculateReward(totalFund, totalValidator) {
-        var totalReward = totalFund.mul(PERCENT_BASE.sub(burnRate)).div(PERCENT_BASE);
+    function calculateReward(totalFund, burnRate, ecoRate, totalValidator) {
+        var burnAmount = totalFund.mul(burnRate).div(PERCENT_BASE);
+        var ecoAmount = totalFund.mul(ecoRate).div(PERCENT_BASE);
+        var totalReward = totalFund.sub(burnAmount).sub(ecoAmount);
 
-        var burnAmount = totalFund.sub(totalReward);
         var totalBaseReward = totalReward.mul(baseRate).div(PERCENT_BASE);
         var baseReward = totalBaseReward.div(totalValidator);
-        return{burnAmount, totalReward, totalBaseReward, baseReward}
+        return{ecoAmount, burnAmount, totalReward, totalBaseReward, baseReward}
     }
 
     function checkClaimEvent(log, to, amount) {

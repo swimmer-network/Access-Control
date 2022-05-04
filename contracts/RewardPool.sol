@@ -14,17 +14,21 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
     function initialize(
         address _owner,
         address _accessControl,
-        uint _burnRate,
+        address ecosystemAddr,
+        uint burnPercent, // 25%
+        uint ecosystemPoolPercent, // 10%
         uint minimum,
         uint maximum,
         uint baseRate
     ) external initializer() {
         accessControlAddress = _accessControl;
-        burnRate = _burnRate;
+        burnRate = burnPercent;
+        ecosystemRate = ecosystemPoolPercent;
         minimumStake = minimum;
         maximumStake = maximum;
         baseRewardRate = baseRate;
         claimedPeriod = 2 weeks;
+        ecosystemAddress = ecosystemAddr;
         _transferOwnership(_owner);
     }
 
@@ -71,11 +75,11 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
     function claimReward() external{
         require(lastClaimedTime > 0 && lastClaimedTime < block.timestamp, "RewardPool: not allow to claim");
         address[] memory validatorsSet = IAccessControl(accessControlAddress).getValidatorsSet();
-        (uint burnAmount, uint remainingReward, uint baseRewardPerValidator, uint activeNumber) = _calculateBaseReward();
+        (uint ecosystemAmount, uint burnAmount, uint remainingReward, uint baseRewardPerValidator, uint activeNumber) = _calculateBaseReward();
 
         uint remainingStake = totalStake - minimumStake * activeNumber;
         // validator base reward
-        uint _reward = baseRewardPerValidator / CRAExponent;
+        uint _reward = baseRewardPerValidator;
         for(uint i = 0; i < validatorsSet.length; i++){
             if(!IAccessControl(accessControlAddress).isValidator(validatorsSet[i])) {
                 continue;
@@ -83,8 +87,8 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
             uint256 rwAmount = _reward; // base reward
             // if stake more than minimum, get extra reward
             if(stakedAmounts[validatorsSet[i]] > minimumStake){
-                uint _r = (stakedAmounts[validatorsSet[i]] - minimumStake) * remainingReward / remainingStake / CRAExponent;
-                rwAmount = rwAmount + _r;
+                rwAmount = rwAmount + ((stakedAmounts[validatorsSet[i]] - minimumStake) * remainingReward / remainingStake);
+                // rwAmount = rwAmount + _r;
             }
             // transfer reward to validators
             payable(validatorsSet[i]).transfer(rwAmount);
@@ -96,6 +100,10 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
             payable(address(0x0)).transfer(burnAmount);
             emit ClaimReward(address(0x0), burnAmount);
         }
+        if (ecosystemAmount > 0) {
+            payable(ecosystemAddress).transfer(ecosystemAmount);
+            emit ClaimReward(ecosystemAddress, ecosystemAmount);
+        }
         lastClaimedTime = lastClaimedTime + claimedPeriod;
     }
 
@@ -103,15 +111,18 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
         return stakedAmounts[validator];
     }
 
-    function _calculateBaseReward() internal view returns(uint,uint,uint,uint){
+    function _calculateBaseReward() public view returns(uint,uint,uint,uint,uint){
         uint currentRewardBalance = address(this).balance;
+        uint burnAmount = currentRewardBalance * burnRate / rateDecimals;
+        uint ecosystemAmount = currentRewardBalance * ecosystemRate / rateDecimals;
         uint activeNumber = IAccessControl(accessControlAddress).numberOfActiveValidators();
-        uint rewardAfterBurn = currentRewardBalance * CRAExponent * (rateDecimals - burnRate) / rateDecimals;
+
+        uint rewardAfterBurn = currentRewardBalance - burnAmount - ecosystemAmount;
         uint totalBaseReward = rewardAfterBurn * baseRewardRate / rateDecimals;
         uint remainingReward = rewardAfterBurn - totalBaseReward;
         uint baseRewardPerValidator = totalBaseReward / activeNumber;
-        uint burnAmount = currentRewardBalance - rewardAfterBurn/CRAExponent;
-        return (burnAmount, remainingReward, baseRewardPerValidator, activeNumber);
+
+        return (ecosystemAmount, burnAmount, remainingReward, baseRewardPerValidator, activeNumber);
     }
 
     function setStartRewardPeriod(uint256 time) external onlyOwner() {
@@ -135,6 +146,16 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
         require(newThreshold > minimumStake, "must be greater than minimum");
         maximumStake = newThreshold;
     }
+
+    function changeRate(uint burnPercent, uint ecosystemPoolPercent) external onlyOwner() {
+        burnRate = burnPercent;
+        ecosystemRate = ecosystemPoolPercent;
+    }
+
+    function changeEcosystemAddress(address addr) external onlyOwner() {
+        ecosystemAddress = addr;
+    }
+
     fallback() external payable {
         
     }

@@ -9,7 +9,7 @@ import "./RewardPoolStorage.sol";
 
 
 contract RewardPool is Ownable, Initializable, RewardPoolStorage{
-    event ClaimReward(address to, uint256 amount);
+    event ClaimReward(address indexed to, uint256 amount);
 
     function initialize(
         address _owner,
@@ -88,7 +88,6 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
             // if stake more than minimum, get extra reward
             if(stakedAmounts[validatorsSet[i]] > minimumStake){
                 rwAmount = rwAmount + ((stakedAmounts[validatorsSet[i]] - minimumStake) * remainingReward / remainingStake);
-                // rwAmount = rwAmount + _r;
             }
             // transfer reward to validators
             payable(validatorsSet[i]).transfer(rwAmount);

@@ -13,4 +13,6 @@ contract RewardPoolStorage {
     uint256 public minimumStake;
     uint256 public maximumStake;
     uint public baseRewardRate;
+    uint public ecosystemRate;
+    address public ecosystemAddress;
 }

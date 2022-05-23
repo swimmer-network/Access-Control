@@ -19,31 +19,42 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
         _;
     }
 
-    function initialize(address cra, uint min, uint max, uint _slippage) external initializer() {
+    function initialize(address cra, uint min, uint max, uint _slippage, address _owner) external initializer() {
         _setOwner(msg.sender);
         CRAToken = cra;
         unstakedEpoch = 28; // wait to 28 days to withdraw stake
         minStakedAmount = min;
         maxStakedAmount = max;
         slippage = _slippage;
+        transferOwnership(_owner);
+
     }
 
     function deposit(uint amount) external whenNotPaused() onlyWhitelist(){
         require(amount >= minStakedAmount, "STAKING: less than minimum amount");
+
         Validator storage user = validatorInfo[msg.sender];
 
+        require(user.stakedAmount == 0 && user.depositTime == 0, "Staking: already deposited");
         IERC20(CRAToken).transferFrom(msg.sender, address(this), amount);
         user.stakedAmount = amount;
         user.depositTime = block.timestamp;
+
+        //update total stake
+        totalStake = totalStake + amount;
         emit Deposit(msg.sender, amount, block.timestamp);
     }
 
     function addMoreStake(uint amount) external whenNotPaused() onlyWhitelist() {
         Validator storage user = validatorInfo[msg.sender];
         uint current = user.stakedAmount;
+        require(user.depositTime > 0, "Staking: has not deposited");
         require(current + amount <= maxStakedAmount, "STAKING: exceed max amount");
         IERC20(CRAToken).transferFrom(msg.sender, address(this), amount);
         user.stakedAmount = current + amount;
+        
+        //update total stake
+        totalStake = totalStake + amount;
 
         emit AddMoreStake(msg.sender, amount);
     }
@@ -59,6 +70,9 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
         require(r < slippage, "STAKING: can not unstake due to overtime");
         uint amount = user.stakedAmount;
         user.stakedAmount = 0; //update staked amount
+        user.depositTime = 0;
+
+        totalStake = totalStake - amount;
         
         IERC20(CRAToken).transfer(msg.sender, amount);
         emit Unstake(msg.sender, amount);

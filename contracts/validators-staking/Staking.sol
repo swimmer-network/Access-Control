@@ -59,15 +59,18 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
         emit AddMoreStake(msg.sender, amount);
     }
 
-    function calculate(uint depositTime) internal view returns(uint){
+    function calculate(uint depositTime) internal view returns(uint, uint){
         uint r = (block.timestamp - depositTime)/day;
-        return r % unstakedEpoch;
+        uint remainder = r % unstakedEpoch;
+        uint quotient = r / unstakedEpoch;
+        return (quotient, remainder);
     }
 
     function unstake() external whenNotPaused() onlyWhitelist(){
         Validator storage user = validatorInfo[msg.sender];
-        uint r = calculate(user.depositTime);
-        require(r < slippage, "STAKING: can not unstake due to overtime");
+        (uint quotient, uint remainder) = calculate(user.depositTime);
+        require(quotient > 0, "STAKING: not allot to unstake");
+        require(remainder < slippage, "STAKING: can not unstake due to overtime");
         uint amount = user.stakedAmount;
         user.stakedAmount = 0; //update staked amount
         user.depositTime = 0;

@@ -3,11 +3,10 @@ pragma solidity 0.8.10;
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./StakingStorage.sol";
-import "./libs/Ownable2.sol";
 
-contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
+contract Staking is Ownable, Pausable, Initializable , StakingStorage {
 
     event Deposit(address indexed staker, uint indexed amount, uint depositTime);
     event AddMoreStake(address indexed staker, uint amount);
@@ -20,7 +19,6 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
     }
 
     function initialize(address cra, uint min, uint max, uint _slippage, address _owner) external initializer() {
-        _setOwner(msg.sender);
         CRAToken = cra;
         unstakedEpoch = 28; // wait to 28 days to withdraw stake
         minStakedAmount = min;
@@ -35,7 +33,7 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
 
         Validator storage user = validatorInfo[msg.sender];
 
-        require(user.stakedAmount == 0 && user.depositTime == 0, "Staking: already deposited");
+        require(user.stakedAmount == 0 && user.depositTime == 0, "STAKING: already deposited");
         IERC20(CRAToken).transferFrom(msg.sender, address(this), amount);
         user.stakedAmount = amount;
         user.depositTime = block.timestamp;
@@ -48,7 +46,7 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
     function addMoreStake(uint amount) external whenNotPaused() onlyWhitelist() {
         Validator storage user = validatorInfo[msg.sender];
         uint current = user.stakedAmount;
-        require(user.depositTime > 0, "Staking: has not deposited");
+        require(user.depositTime > 0, "STAKING: has not deposited");
         require(current + amount <= maxStakedAmount, "STAKING: exceed max amount");
         IERC20(CRAToken).transferFrom(msg.sender, address(this), amount);
         user.stakedAmount = current + amount;
@@ -69,7 +67,7 @@ contract Staking is Ownable2, Pausable, Initializable , StakingStorage {
     function unstake() external whenNotPaused() onlyWhitelist(){
         Validator storage user = validatorInfo[msg.sender];
         (uint quotient, uint remainder) = calculate(user.depositTime);
-        require(quotient > 0, "STAKING: not allot to unstake");
+        require(quotient > 0, "STAKING: not allow to unstake");
         require(remainder < slippage, "STAKING: can not unstake due to overtime");
         uint amount = user.stakedAmount;
         user.stakedAmount = 0; //update staked amount

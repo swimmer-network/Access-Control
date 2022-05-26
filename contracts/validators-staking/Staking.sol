@@ -24,7 +24,7 @@ contract Staking is Ownable, Pausable, Initializable , StakingStorage {
         minStakedAmount = min;
         maxStakedAmount = max;
         slippage = _slippage;
-        transferOwnership(_owner);
+        _transferOwnership(_owner);
 
     }
 

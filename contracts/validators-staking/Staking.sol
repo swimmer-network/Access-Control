@@ -30,6 +30,7 @@ contract Staking is Ownable, Pausable, Initializable , StakingStorage {
 
     function deposit(uint amount) external whenNotPaused() onlyWhitelist(){
         require(amount >= minStakedAmount, "STAKING: less than minimum amount");
+        require(amount <= maxStakedAmount, "STAKING: greater than maximum amount");
 
         Validator storage user = validatorInfo[msg.sender];
 

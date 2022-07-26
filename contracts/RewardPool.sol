@@ -117,9 +117,9 @@ contract RewardPool is Ownable, Initializable, RewardPoolStorage{
         uint activeNumber = IAccessControl(accessControlAddress).numberOfActiveValidators();
 
         uint rewardAfterBurn = currentRewardBalance - burnAmount - ecosystemAmount;
-        uint totalBaseReward = rewardAfterBurn * baseRewardRate / rateDecimals;
+        uint baseRewardPerValidator = rewardAfterBurn * baseRewardRate / rateDecimals;
+        uint totalBaseReward = baseRewardPerValidator * activeNumber;
         uint remainingReward = rewardAfterBurn - totalBaseReward;
-        uint baseRewardPerValidator = totalBaseReward / activeNumber;
 
         return (ecosystemAmount, burnAmount, remainingReward, baseRewardPerValidator, activeNumber);
     }
